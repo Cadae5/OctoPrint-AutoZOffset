@@ -104,3 +104,7 @@ class AutoZOffsetPlugin(octoprint.plugin.SettingsPlugin,
 		
 		self._logger.info("Calculated New Offset: {}".format(new_offset))
 		self._printer.commands(["M851 Z{:.2f}".format(new_offset), "M500"])
+
+__plugin_name__ = 'AutoZOffset Plugin'
+__plugin_pythoncompat__ = '>=3.7,<4'
+__plugin_implementation__ = AutoZOffsetPlugin()
