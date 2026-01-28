@@ -34,7 +34,8 @@ class AutoZOffsetPlugin(octoprint.plugin.SettingsPlugin,
 
 	def get_template_configs(self):
 		return [
-			dict(type="settings", custom_bindings=True)
+			dict(type="settings", custom_bindings=False),
+			dict(type="sidebar", icon="arrows-v", list=True)
 		]
 
 	##~~ SimpleApiPlugin mixin
