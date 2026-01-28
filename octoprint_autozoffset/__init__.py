@@ -62,10 +62,11 @@ class AutoZOffsetPlugin(octoprint.plugin.SettingsPlugin,
 			return line
 
 		if self.state == "FETCHING_OFFSET":
+			self._logger.info("FETCHING_OFFSET checking line: '{}'".format(line.strip()))
 			# Parse "echo:Z Offset : -1.23" or "Probe Z Offset: -1.23" (Marlin variations)
-			# Standard Marlin M851 response: "echo:Probe Z Offset: -2.30" or just "Probe Z Offset: ..."
 			if "Z Offset" in line:
-				match = re.search(r"Z Offset.*:?\s+(-?\d+(\.\d+)?)", line, re.IGNORECASE)
+				# Regex to find decimal number after "Z Offset" and optional colon/spaces
+				match = re.search(r"Z Offset.*:?\s+([-+]?\d*\.?\d+)", line, re.IGNORECASE)
 				if match:
 					self.current_z_offset = float(match.group(1))
 					self._logger.info("Current Z Offset: {}".format(self.current_z_offset))
@@ -74,12 +75,16 @@ class AutoZOffsetPlugin(octoprint.plugin.SettingsPlugin,
 					self.state = "MOVING"
 					x = self._settings.get_float(["switch_x"])
 					y = self._settings.get_float(["switch_y"])
+					self._logger.info("Moving to X: {} Y: {}".format(x, y))
 					self._printer.commands(["G0 X{:.2f} Y{:.2f} F3000".format(x, y)])
 					
-					# Then Probe
+					# Then Probe (threaded to allow move to finish? G0 is buffered usually, but we want to wait?)
+					# Sending G30 immediately after G0 is fine, firmware handles buffer.
 					self.state = "PROBING"
 					self._printer.commands(["G30"])
 					return line
+				else:
+					self._logger.info("Matched 'Z Offset' but failed regex")
 
 		if self.state == "PROBING":
 			# Parse G30 response: "Bed X: 10.00 Y: 10.00 Z: 2.50"
