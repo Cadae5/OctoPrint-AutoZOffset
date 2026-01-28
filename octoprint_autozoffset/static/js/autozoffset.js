@@ -10,10 +10,13 @@ $(function () {
 
         self.settingsViewModel = parameters[0];
 
+        // Map settings so template can read settings.plugins...
+        self.settings = self.settingsViewModel.settings;
+
         self.calibrate_z_offset = function () {
             OctoPrint.simpleApiCommand("autozoffset", "calibrate")
                 .done(function (response) {
-                    // console.log("Calibration started");
+                    console.log("Calibration started", response);
                 });
         };
     }
