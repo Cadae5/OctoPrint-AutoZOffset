@@ -20,6 +20,7 @@ class AutoZOffsetPlugin(octoprint.plugin.SettingsPlugin,
 		return dict(
 			switch_x=0.0,
 			switch_y=0.0,
+			safe_z=10.0,
 			reference_height=0.0
 		)
 
@@ -73,15 +74,21 @@ class AutoZOffsetPlugin(octoprint.plugin.SettingsPlugin,
 					
 					# Proceed to move
 					self.state = "MOVING"
+					
+					# Move to Safe Z first
+					safe_z = self._settings.get_float(["safe_z"])
+					self._logger.info("Moving to Safe Z: {}".format(safe_z))
+					self._printer.commands(["G0 Z{:.2f}".format(safe_z)])
+
+					# Then Probe at switch location
+					# User requested: G30 X... Y...
 					x = self._settings.get_float(["switch_x"])
 					y = self._settings.get_float(["switch_y"])
-					self._logger.info("Moving to X: {} Y: {}".format(x, y))
-					self._printer.commands(["G0 X{:.2f} Y{:.2f} F3000".format(x, y)])
+					self._logger.info("Probing at X: {} Y: {}".format(x, y))
 					
-					# Then Probe (threaded to allow move to finish? G0 is buffered usually, but we want to wait?)
-					# Sending G30 immediately after G0 is fine, firmware handles buffer.
 					self.state = "PROBING"
-					self._printer.commands(["G30"])
+					# Sending G30 with coordinates
+					self._printer.commands(["G30 X{:.2f} Y{:.2f}".format(x, y)])
 					return line
 				else:
 					self._logger.info("Matched 'Z Offset' but failed regex")
